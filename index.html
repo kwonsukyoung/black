@@ -1,0 +1,2350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>블랙박스 범인 잡기 v2 - 접촉·주차기동·스크래치 정밀 탐지기</title>
+  <style>
+    :root {
+      --bg-main: #0b0f17;
+      --bg-card: #131a27;
+      --bg-card-hover: #192233;
+      --bg-input: #0e1420;
+      --border-color: #253047;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --purple: #a855f7;
+      --success: #10b981;
+      --cyan: #06b6d4;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px;
+      background: rgba(19, 26, 39, 0.94);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      font-size: 28px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand h1 {
+      font-size: 1.22rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .sub-badge {
+      font-size: 0.76rem;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.16);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+
+    .subtitle {
+      font-size: 0.83rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .engine-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+    }
+
+    .engine-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--warning);
+    }
+
+    .engine-badge.online .dot {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .engine-badge.browser-mode .dot {
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 20px;
+      padding: 20px 24px;
+      max-width: 1740px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 1180px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .drop-zone {
+      border: 2px dashed #334155;
+      border-radius: 12px;
+      padding: 20px 14px;
+      text-align: center;
+      background: rgba(14, 20, 32, 0.65);
+      transition: all 0.2s ease;
+    }
+
+    .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .drop-icon {
+      font-size: 30px;
+      margin-bottom: 4px;
+    }
+
+    .drop-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+    }
+
+    .drop-desc {
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .drop-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .local-folder-box {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+    }
+
+    .file-summary {
+      margin-top: 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .summary-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.84rem;
+      margin-bottom: 6px;
+    }
+
+    .text-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .file-list-preview {
+      list-style: none;
+      max-height: 115px;
+      overflow-y: auto;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .file-list-preview li {
+      padding: 4px 6px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .file-list-preview li:hover,
+    .file-list-preview li.active-file {
+      background: rgba(59, 130, 246, 0.16);
+      color: #fff;
+    }
+
+    .field-group {
+      margin-bottom: 14px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.81rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .preset-btn {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 8px 9px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+
+    .preset-btn:hover {
+      border-color: #475569;
+      color: var(--text-primary);
+    }
+
+    .preset-btn.active {
+      background: rgba(59, 130, 246, 0.18);
+      border-color: var(--accent);
+      color: #93c5fd;
+    }
+
+    .help-tip {
+      font-size: 0.76rem;
+      color: #cbd5e1;
+      margin-top: 8px;
+      background: rgba(6, 182, 212, 0.1);
+      border-left: 3px solid var(--cyan);
+      padding: 7px 9px;
+      border-radius: 4px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .val-badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #60a5fa;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      margin: 4px 0;
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.71rem;
+      color: var(--text-muted);
+    }
+
+    .field-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .field-group.half {
+      flex: 1;
+    }
+
+    .filter-box {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    .checkbox-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .checkbox-row input {
+      margin-top: 3px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 0.8rem;
+    }
+
+    .btn-lg {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #1e293b;
+      border-color: #334155;
+      color: var(--text-primary);
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, #2563eb, #0891b2);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .progress-panel {
+      margin-top: 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.81rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .progress-bar-bg {
+      height: 10px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+      transition: width 0.25s ease;
+    }
+
+    .progress-sub {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .player-card {
+      padding: 16px;
+    }
+
+    .player-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .now-playing {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge-live {
+      background: rgba(6, 182, 212, 0.16);
+      color: #22d3ee;
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .video-title-text {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .roi-coords-badge {
+      font-size: 0.78rem;
+      color: #fbbf24;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .video-stage-wrapper {
+      position: relative;
+      width: 100%;
+      height: 430px;
+      background: #05080f;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-zoom-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+      transition: transform 0.12s ease-out;
+    }
+
+    #mainVideo {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+
+    .roi-overlay-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: auto;
+      cursor: crosshair;
+    }
+
+    .empty-video-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: rgba(8, 12, 20, 0.92);
+      padding: 24px;
+    }
+
+    .placeholder-inner .big-icon {
+      font-size: 44px;
+      margin-bottom: 10px;
+    }
+
+    .placeholder-inner h3 {
+      font-size: 1.08rem;
+      margin-bottom: 6px;
+    }
+
+    .placeholder-inner p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .inspector-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .tool-label {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-right: 3px;
+    }
+
+    .btn-tool {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 5px 9px;
+      font-size: 0.78rem;
+      border-radius: 6px;
+    }
+
+    .btn-tool:hover,
+    .btn-tool.active {
+      background: rgba(59, 130, 246, 0.22);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .checkbox-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      margin-right: 8px;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .results-title-row h2 {
+      font-size: 1.08rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .count-pill {
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.78rem;
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+
+    .filtered-pill {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      font-size: 0.75rem;
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+
+    .results-sub {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 3px;
+    }
+
+    .results-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .filter-tab {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .filter-tab.active {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .sort-select {
+      width: auto;
+      min-width: 190px;
+    }
+
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 16px;
+    }
+
+    .empty-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 44px 20px;
+      color: var(--text-secondary);
+      background: rgba(14, 20, 32, 0.5);
+      border: 1px dashed var(--border-color);
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+
+    .event-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .event-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+    }
+
+    .event-card.selected {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35);
+    }
+
+    .event-card.impact-card {
+      border-color: rgba(239, 68, 68, 0.65);
+    }
+
+    .thumb-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .strip-wrap {
+      width: 100%;
+      background: #090d14;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .strip-wrap img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .event-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      backdrop-filter: blur(4px);
+    }
+
+    .event-badge.impact {
+      background: rgba(220, 38, 38, 0.92);
+      color: #fff;
+    }
+
+    .event-badge.scrape_maneuver {
+      background: rgba(217, 119, 6, 0.92);
+      color: #fff;
+    }
+
+    .event-badge.person_linger {
+      background: rgba(147, 51, 234, 0.92);
+      color: #fff;
+    }
+
+    .event-badge.pass_through {
+      background: rgba(71, 85, 105, 0.9);
+      color: #e2e8f0;
+    }
+
+    .score-pill {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(15, 23, 42, 0.88);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    .time-overlay {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #e2e8f0;
+      font-size: 0.73rem;
+      font-family: monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .event-body {
+      padding: 11px 13px;
+    }
+
+    .event-file {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .event-reason {
+      font-size: 0.76rem;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 4px 7px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .event-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <header class="top-header">
+    <div class="brand">
+      <div class="brand-icon">🚨</div>
+      <div>
+        <h1>
+          블랙박스 범인 잡기 v2
+          <span class="sub-badge">단순 주행차량 자동 배제 · 접촉/주차기동/문콕 정밀 탐지</span>
+        </h1>
+        <p class="subtitle">
+          단순히 도로를 지나가는 차는 걸러내고, 내 차 옆에서 <strong>멈칫거리거나 주차/출차 기동, 서성거림, 실제 차체 흔들림</strong>이 발생한 장면만 추출합니다.
+        </p>
+      </div>
+    </div>
+    <div class="header-status">
+      <div id="engineBadge" class="engine-badge checking">
+        <span class="dot"></span>
+        <span id="engineText">분석 엔진 확인 중...</span>
+      </div>
+      <button id="exportReportBtn" class="btn btn-secondary btn-sm" disabled>
+        📋 감지 리포트 다운로드
+      </button>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <!-- 좌측 컨트롤 패널 -->
+    <aside class="sidebar">
+      <section class="card">
+        <div class="card-header">
+          <span class="step-num">1</span>
+          <h2>블랙박스 영상 일괄 넣기</h2>
+        </div>
+
+        <div id="dropZone" class="drop-zone">
+          <div class="drop-icon">📂</div>
+          <p class="drop-title">여기에 블랙박스 영상들을 드래그 앤 드롭</p>
+          <p class="drop-desc">MP4, AVI, MOV, MKV 여러 개 동시 선택 가능</p>
+          <div class="drop-actions">
+            <label class="btn btn-primary btn-sm">
+              영상을 여러 개 선택
+              <input type="file" id="fileInput" multiple accept="video/*,.mp4,.avi,.mov,.mkv" hidden />
+            </label>
+            <label class="btn btn-secondary btn-sm">
+              폴더 통째로 선택
+              <input type="file" id="folderInput" webkitdirectory directory multiple hidden />
+            </label>
+          </div>
+        </div>
+
+        <div id="localFolderBox" class="local-folder-box hidden">
+          <label class="field-label">또는 로컬 폴더 경로 직접 입력 (복사 없이 초고속 스캔)</label>
+          <input type="text" id="localFolderPath" placeholder="예: /Volumes/SDCARD/Parking" />
+        </div>
+
+        <div id="fileSummary" class="file-summary hidden">
+          <div class="summary-top">
+            <span id="fileCountText"><strong>0</strong>개 영상 준비됨</span>
+            <button id="clearFilesBtn" class="text-btn">초기화</button>
+          </div>
+          <ul id="fileListPreview" class="file-list-preview"></ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <span class="step-num">2</span>
+          <h2>내 차 왼쪽 뒷 필러 접촉 구역 & 필터 설정</h2>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">내 차 접촉 경계 구역 (ROI) 설정</label>
+          <div class="preset-grid">
+            <button type="button" class="preset-btn active" data-preset="left_pillar">
+              🎯 왼쪽 뒷 필러/좌측 밀착구역
+            </button>
+            <button type="button" class="preset-btn" data-preset="rear_left_corner">
+              📐 좌측 하단 모서리 (범퍼·필러)
+            </button>
+            <button type="button" class="preset-btn" data-preset="right_side">
+              👉 우측 밀착구역 (조수석 방향)
+            </button>
+            <button type="button" class="preset-btn" data-preset="full">
+              🚗 전체 화면 (시계 자막 제외)
+            </button>
+          </div>
+          <p class="help-tip">
+            💡 <strong>핵심 팁:</strong> 차가 쌩쌩 지나가는 멀리 있는 차선까지 포함하지 말고, 우측 화면에서 <strong>내 차 왼쪽 뒷 필러 바로 옆 접촉 구역만 마우스로 드래그</strong>해 주시면 정확도가 극대화됩니다!
+          </p>
+        </div>
+
+        <div class="filter-box">
+          <label class="checkbox-row">
+            <input type="checkbox" id="excludePassThroughCheck" checked />
+            <span>
+              <strong>단순 통과 차량 자동 제외 (권장)</strong><br />
+              <small style="color:var(--text-secondary);">일정한 속도로 멈추지 않고 직선 주행해 지나가는 차량은 결과에서 바로 걸러냅니다.</small>
+            </span>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="detectShakeCheck" checked />
+            <span>
+              <strong>정적 배경 기준 실제 차체 흔들림(충격) 감지</strong><br />
+              <small style="color:var(--text-secondary);">지나가는 차 크기가 아니라, 멀리 있는 기둥·건물 배경이 순간 흔들렸는지 측정합니다.</small>
+            </span>
+          </label>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group half">
+            <label class="field-label" for="minDwellSelect">최소 근접 체류 시간</label>
+            <select id="minDwellSelect">
+              <option value="1.5">1.5초 이상 체류</option>
+              <option value="2.2" selected>2.2초 이상 (권장)</option>
+              <option value="3.5">3.5초 이상 (주차/서성거림)</option>
+            </select>
+          </div>
+          <div class="field-group half">
+            <label class="field-label" for="sampleFpsSelect">궤적 분석 밀도</label>
+            <select id="sampleFpsSelect">
+              <option value="3">고속 스캔 (3 FPS)</option>
+              <option value="5" selected>정밀 궤적 (5 FPS)</option>
+              <option value="8">초정밀 (8 FPS)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="slider-header">
+            <label class="field-label" for="sensitivityRange">픽셀 변화 감지 민감도</label>
+            <span id="sensitivityVal" class="val-badge">65 (권장)</span>
+          </div>
+          <input type="range" id="sensitivityRange" min="25" max="90" value="65" />
+          <div class="slider-labels">
+            <span>둔감</span>
+            <span>민감 (어두운 주차장/미세 움직임)</span>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button id="startAnalyzeBtn" class="btn btn-accent btn-lg" disabled>
+            🔍 긁고 간 용의 장면 정밀 분석 시작
+          </button>
+          <button id="stopAnalyzeBtn" class="btn btn-danger btn-lg hidden">
+            ⏹ 분석 중지
+          </button>
+        </div>
+
+        <div id="progressPanel" class="progress-panel hidden">
+          <div class="progress-info">
+            <span id="progressStatusText">분석 준비 중...</span>
+            <span id="progressPctText">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="progressBarFill" class="progress-bar-fill" style="width: 0%"></div>
+          </div>
+          <div class="progress-sub">
+            <span id="progressFileSub">0 / 0 파일 완료</span>
+            <span id="progressFoundSub">용의 장면: 0건</span>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- 우측 워크스페이스 -->
+    <section class="workspace">
+      <div class="card player-card">
+        <div class="player-top-bar">
+          <div class="now-playing">
+            <span class="badge-live">플레이어 & 내 차 접촉 구역(ROI) 설정</span>
+            <span id="currentVideoTitle" class="video-title-text">
+              영상을 넣으면 미리보기 위에서 마우스 드래그로 왼쪽 뒷 필러 옆 구역을 지정할 수 있습니다.
+            </span>
+          </div>
+          <div class="roi-coords-badge" id="roiCoordsBadge">
+            감시 영역: 왼쪽 뒷 필러/좌측 밀착구역
+          </div>
+        </div>
+
+        <div class="video-stage-wrapper" id="videoStageWrapper">
+          <div class="video-zoom-container" id="videoZoomContainer">
+            <video id="mainVideo" controls playsinline crossorigin="anonymous"></video>
+            <canvas id="roiOverlayCanvas" class="roi-overlay-canvas"></canvas>
+          </div>
+          <div id="emptyVideoPlaceholder" class="empty-video-placeholder">
+            <div class="placeholder-inner">
+              <div class="big-icon">🚗</div>
+              <h3>블랙박스 영상을 좌측에 넣어주세요</h3>
+              <p>
+                단순히 지나가는 차량은 자동으로 배제하고,<br />
+                <strong>내 차 옆에서 멈칫거리거나 주차/출차하며 스치는 장면, 보행자가 다가와 머무르는 장면, 차체가 흔들린 장면</strong>만 골라냅니다.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="inspector-toolbar">
+          <div class="tool-group">
+            <span class="tool-label">구간 이동:</span>
+            <button type="button" class="btn btn-tool" id="stepBack2sBtn">-2초</button>
+            <button type="button" class="btn btn-tool" id="stepBackFrameBtn">◀ 1프레임</button>
+            <button type="button" class="btn btn-tool" id="stepFwdFrameBtn">1프레임 ▶</button>
+            <button type="button" class="btn btn-tool" id="stepFwd2sBtn">+2초</button>
+          </div>
+
+          <div class="tool-group">
+            <span class="tool-label">재생 속도:</span>
+            <button type="button" class="btn btn-tool speed-btn" data-speed="0.25">0.25x</button>
+            <button type="button" class="btn btn-tool speed-btn" data-speed="0.5">0.5x</button>
+            <button type="button" class="btn btn-tool speed-btn active" data-speed="1.0">1.0x</button>
+            <button type="button" class="btn btn-tool speed-btn" data-speed="2.0">2.0x</button>
+          </div>
+
+          <div class="tool-group">
+            <span class="tool-label">번호판 확대(Zoom):</span>
+            <button type="button" class="btn btn-tool zoom-btn active" data-zoom="1">1x</button>
+            <button type="button" class="btn btn-tool zoom-btn" data-zoom="2">2x</button>
+            <button type="button" class="btn btn-tool zoom-btn" data-zoom="3">3x</button>
+            <button type="button" class="btn btn-tool zoom-btn" data-zoom="4">4x</button>
+          </div>
+
+          <div class="tool-group">
+            <label class="checkbox-inline">
+              <input type="checkbox" id="drawRoiModeCheck" checked />
+              <span>마우스로 접촉구역(ROI) 그리기</span>
+            </label>
+            <button type="button" class="btn btn-primary btn-sm" id="captureFrameBtn">
+              📸 증거 화면 캡처 저장
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 감지 결과 카드 목록 -->
+      <div class="card results-card">
+        <div class="results-header">
+          <div class="results-title-row">
+            <h2>
+              🎯 긁힘·접촉·근접체류 용의 장면
+              <span id="totalEventsBadge" class="count-pill">0건</span>
+              <span id="filteredOutBadge" class="filtered-pill">단순 통과 차량 0대 자동 제외됨</span>
+            </h2>
+            <p class="results-sub">
+              각 카드에는 <strong>[1. 접근 → 2. 밀착 피크 → 3. 직후] 3단 비교 사진</strong>과 <strong>초록색 이동 궤적선</strong>, <strong>판정 근거</strong>가 표시됩니다.
+            </p>
+          </div>
+
+          <div class="results-controls">
+            <div class="filter-tabs">
+              <button type="button" class="filter-tab active" data-filter="all">전체 용의 장면</button>
+              <button type="button" class="filter-tab" data-filter="impact">🚨 차체 흔들림(접촉)</button>
+              <button type="button" class="filter-tab" data-filter="scrape_maneuver">⚠️ 차량 근접 감속·주차기동</button>
+              <button type="button" class="filter-tab" data-filter="person_linger">🕵️ 보행자·문콕 근접체류</button>
+            </div>
+
+            <select id="sortOrderSelect" class="sort-select">
+              <option value="score_desc">🔥 접촉 의심도 높은 순</option>
+              <option value="dwell_desc">⏱️ 내 차 옆 체류시간 긴 순</option>
+              <option value="time_asc">🕒 파일 및 시간 순서대로</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="eventsGrid" class="events-grid">
+          <div class="empty-results">
+            <p>
+              아직 분석된 장면이 없습니다. 좌측에서 블랙박스 영상을 넣고 <strong>[긁고 간 용의 장면 정밀 분석 시작]</strong>을 눌러주세요.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <video id="hiddenWorkerVideo" muted playsinline style="display:none;"></video>
+  <canvas id="hiddenWorkerCanvas" style="display:none;"></canvas>
+
+  <script>
+    const state = {
+      engineMode: "browser",
+      selectedFiles: [],
+      objectUrls: [],
+      currentJobId: null,
+      isAnalyzing: false,
+      cancelRequested: false,
+      pollTimer: null,
+      // 왼쪽 뒷 필러/좌측 밀착 기본 영역
+      roi: { x: 0.0, y: 0.18, w: 0.48, h: 0.74 },
+      activePreset: "left_pillar",
+      events: [],
+      filteredPassThroughCount: 0,
+      activeFilter: "all",
+      sortOrder: "score_desc",
+      selectedEventId: null,
+      zoomLevel: 1,
+      panX: 0,
+      panY: 0,
+    };
+
+    const ROI_PRESETS = {
+      left_pillar:      { x: 0.00, y: 0.18, w: 0.48, h: 0.74, name: "왼쪽 뒷 필러/좌측 밀착구역" },
+      rear_left_corner: { x: 0.00, y: 0.32, w: 0.42, h: 0.62, name: "좌측 하단 모서리 (범퍼·필러)" },
+      right_side:       { x: 0.52, y: 0.18, w: 0.48, h: 0.74, name: "우측 밀착구역 (조수석 측면)" },
+      full:             { x: 0.00, y: 0.08, w: 1.00, h: 0.84, name: "전체 화면 (시계 자막 제외)" },
+    };
+
+    const els = {
+      engineBadge: document.getElementById("engineBadge"),
+      engineText: document.getElementById("engineText"),
+      exportReportBtn: document.getElementById("exportReportBtn"),
+      dropZone: document.getElementById("dropZone"),
+      fileInput: document.getElementById("fileInput"),
+      folderInput: document.getElementById("folderInput"),
+      localFolderBox: document.getElementById("localFolderBox"),
+      localFolderPath: document.getElementById("localFolderPath"),
+      fileSummary: document.getElementById("fileSummary"),
+      fileCountText: document.getElementById("fileCountText"),
+      clearFilesBtn: document.getElementById("clearFilesBtn"),
+      fileListPreview: document.getElementById("fileListPreview"),
+      presetBtns: document.querySelectorAll(".preset-btn"),
+      excludePassThroughCheck: document.getElementById("excludePassThroughCheck"),
+      detectShakeCheck: document.getElementById("detectShakeCheck"),
+      minDwellSelect: document.getElementById("minDwellSelect"),
+      sampleFpsSelect: document.getElementById("sampleFpsSelect"),
+      sensitivityRange: document.getElementById("sensitivityRange"),
+      sensitivityVal: document.getElementById("sensitivityVal"),
+      startAnalyzeBtn: document.getElementById("startAnalyzeBtn"),
+      stopAnalyzeBtn: document.getElementById("stopAnalyzeBtn"),
+      progressPanel: document.getElementById("progressPanel"),
+      progressStatusText: document.getElementById("progressStatusText"),
+      progressPctText: document.getElementById("progressPctText"),
+      progressBarFill: document.getElementById("progressBarFill"),
+      progressFileSub: document.getElementById("progressFileSub"),
+      progressFoundSub: document.getElementById("progressFoundSub"),
+      currentVideoTitle: document.getElementById("currentVideoTitle"),
+      roiCoordsBadge: document.getElementById("roiCoordsBadge"),
+      videoZoomContainer: document.getElementById("videoZoomContainer"),
+      mainVideo: document.getElementById("mainVideo"),
+      roiOverlayCanvas: document.getElementById("roiOverlayCanvas"),
+      emptyVideoPlaceholder: document.getElementById("emptyVideoPlaceholder"),
+      stepBack2sBtn: document.getElementById("stepBack2sBtn"),
+      stepBackFrameBtn: document.getElementById("stepBackFrameBtn"),
+      stepFwdFrameBtn: document.getElementById("stepFwdFrameBtn"),
+      stepFwd2sBtn: document.getElementById("stepFwd2sBtn"),
+      speedBtns: document.querySelectorAll(".speed-btn"),
+      zoomBtns: document.querySelectorAll(".zoom-btn"),
+      drawRoiModeCheck: document.getElementById("drawRoiModeCheck"),
+      captureFrameBtn: document.getElementById("captureFrameBtn"),
+      totalEventsBadge: document.getElementById("totalEventsBadge"),
+      filteredOutBadge: document.getElementById("filteredOutBadge"),
+      filterTabs: document.querySelectorAll(".filter-tab"),
+      sortOrderSelect: document.getElementById("sortOrderSelect"),
+      eventsGrid: document.getElementById("eventsGrid"),
+      hiddenWorkerVideo: document.getElementById("hiddenWorkerVideo"),
+      hiddenWorkerCanvas: document.getElementById("hiddenWorkerCanvas"),
+    };
+
+    async function initApp() {
+      await checkBackendEngine();
+      bindEvents();
+      updateRoiBadgeText();
+      syncOverlayCanvas();
+    }
+
+    async function checkBackendEngine() {
+      if (location.protocol === "http:" || location.protocol === "https:") {
+        try {
+          const res = await fetch("/api/health", { cache: "no-store" });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.engine === "python-opencv") {
+              state.engineMode = "python";
+              els.engineBadge.className = "engine-badge online";
+              els.engineText.textContent = "Python OpenCV 정밀 궤적 엔진 연결됨";
+              els.localFolderBox.classList.remove("hidden");
+              return;
+            }
+          }
+        } catch (_) {}
+      }
+      state.engineMode = "browser";
+      els.engineBadge.className = "engine-badge browser-mode";
+      els.engineText.textContent = "브라우저 정밀 궤적·접촉 분석 엔진 활성";
+    }
+
+    function bindEvents() {
+      els.dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        els.dropZone.classList.add("dragover");
+      });
+      els.dropZone.addEventListener("dragleave", () => {
+        els.dropZone.classList.remove("dragover");
+      });
+      els.dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        els.dropZone.classList.remove("dragover");
+        if (e.dataTransfer?.files?.length) {
+          handleAddedFiles(Array.from(e.dataTransfer.files));
+        }
+      });
+
+      els.fileInput.addEventListener("change", (e) => {
+        if (e.target.files?.length) handleAddedFiles(Array.from(e.target.files));
+      });
+      els.folderInput.addEventListener("change", (e) => {
+        if (e.target.files?.length) handleAddedFiles(Array.from(e.target.files));
+      });
+      els.localFolderPath.addEventListener("input", updateStartButtonState);
+      els.clearFilesBtn.addEventListener("click", clearSelectedFiles);
+
+      els.presetBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const key = btn.dataset.preset;
+          const preset = ROI_PRESETS[key];
+          if (!preset) return;
+          state.activePreset = key;
+          state.roi = { x: preset.x, y: preset.y, w: preset.w, h: preset.h };
+          els.presetBtns.forEach((b) => b.classList.toggle("active", b === btn));
+          updateRoiBadgeText(preset.name);
+          drawRoiOverlay();
+        });
+      });
+
+      els.sensitivityRange.addEventListener("input", () => {
+        const v = parseInt(els.sensitivityRange.value, 10);
+        let label = "권장";
+        if (v >= 76) label = "민감 (어두운 환경)";
+        else if (v < 45) label = "둔감";
+        els.sensitivityVal.textContent = `${v} (${label})`;
+      });
+
+      els.startAnalyzeBtn.addEventListener("click", startBatchAnalysis);
+      els.stopAnalyzeBtn.addEventListener("click", stopBatchAnalysis);
+
+      els.mainVideo.addEventListener("loadedmetadata", () => {
+        els.emptyVideoPlaceholder.classList.add("hidden");
+        setTimeout(syncOverlayCanvas, 60);
+      });
+      window.addEventListener("resize", syncOverlayCanvas);
+
+      initRoiCanvasDrag();
+
+      els.stepBack2sBtn.addEventListener("click", () => seekRelative(-2.0));
+      els.stepFwd2sBtn.addEventListener("click", () => seekRelative(2.0));
+      els.stepBackFrameBtn.addEventListener("click", () => {
+        els.mainVideo.pause();
+        seekRelative(-1 / 30);
+      });
+      els.stepFwdFrameBtn.addEventListener("click", () => {
+        els.mainVideo.pause();
+        seekRelative(1 / 30);
+      });
+
+      els.speedBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const spd = parseFloat(btn.dataset.speed);
+          els.mainVideo.playbackRate = spd;
+          els.speedBtns.forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+
+      els.zoomBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.zoomLevel = parseInt(btn.dataset.zoom, 10);
+          if (state.zoomLevel === 1) {
+            state.panX = 0;
+            state.panY = 0;
+          }
+          applyVideoZoom();
+          els.zoomBtns.forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+
+      els.drawRoiModeCheck.addEventListener("change", () => {
+        els.roiOverlayCanvas.style.pointerEvents = els.drawRoiModeCheck.checked ? "auto" : "none";
+      });
+
+      els.captureFrameBtn.addEventListener("click", captureCurrentVideoFrame);
+      els.exportReportBtn.addEventListener("click", exportHtmlReport);
+
+      els.filterTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          state.activeFilter = tab.dataset.filter;
+          els.filterTabs.forEach((t) => t.classList.toggle("active", t === tab));
+          renderEventsGrid();
+        });
+      });
+
+      els.sortOrderSelect.addEventListener("change", () => {
+        state.sortOrder = els.sortOrderSelect.value;
+        renderEventsGrid();
+      });
+    }
+
+    function handleAddedFiles(fileList) {
+      const validExts = [".mp4", ".avi", ".mov", ".mkv", ".webm", ".m4v"];
+      const filtered = fileList.filter((f) => {
+        const lower = f.name.toLowerCase();
+        return f.type.startsWith("video/") || validExts.some((ext) => lower.endsWith(ext));
+      });
+
+      if (filtered.length === 0) {
+        alert("지원하는 동영상 파일(MP4, AVI, MOV, MKV)을 선택해 주세요.");
+        return;
+      }
+
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+      state.objectUrls.forEach((u) => URL.revokeObjectURL(u));
+      state.selectedFiles = filtered;
+      state.objectUrls = filtered.map((f) => URL.createObjectURL(f));
+
+      renderFileListPreview();
+      updateStartButtonState();
+      loadVideoToMainPlayer(state.objectUrls[0], filtered[0].name, 0);
+    }
+
+    function clearSelectedFiles() {
+      state.objectUrls.forEach((u) => URL.revokeObjectURL(u));
+      state.selectedFiles = [];
+      state.objectUrls = [];
+      els.fileInput.value = "";
+      els.folderInput.value = "";
+      els.fileSummary.classList.add("hidden");
+      els.fileListPreview.innerHTML = "";
+      updateStartButtonState();
+    }
+
+    function renderFileListPreview() {
+      els.fileSummary.classList.remove("hidden");
+      const totalBytes = state.selectedFiles.reduce((acc, f) => acc + f.size, 0);
+      const mb = (totalBytes / (1024 * 1024)).toFixed(1);
+      els.fileCountText.innerHTML = `<strong>${state.selectedFiles.length}</strong>개 영상 준비됨 (${mb} MB)`;
+
+      els.fileListPreview.innerHTML = "";
+      state.selectedFiles.forEach((file, idx) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span>🎬 ${escapeHtml(file.name)}</span>
+          <span>${(file.size / (1024 * 1024)).toFixed(1)}MB</span>
+        `;
+        li.addEventListener("click", () => {
+          loadVideoToMainPlayer(state.objectUrls[idx], file.name, 0);
+          Array.from(els.fileListPreview.children).forEach((el, i) =>
+            el.classList.toggle("active-file", i === idx)
+          );
+        });
+        if (idx === 0) li.classList.add("active-file");
+        els.fileListPreview.appendChild(li);
+      });
+    }
+
+    function updateStartButtonState() {
+      const hasFolder = state.engineMode === "python" && els.localFolderPath.value.trim().length > 0;
+      const hasFiles = state.selectedFiles.length > 0;
+      els.startAnalyzeBtn.disabled = !(hasFiles || hasFolder) || state.isAnalyzing;
+    }
+
+    function loadVideoToMainPlayer(srcUrl, titleText, startTimeSec = 0) {
+      els.emptyVideoPlaceholder.classList.add("hidden");
+      els.currentVideoTitle.textContent = titleText;
+
+      if (els.mainVideo.src !== srcUrl) {
+        els.mainVideo.src = srcUrl;
+        els.mainVideo.load();
+        els.mainVideo.onloadeddata = () => {
+          syncOverlayCanvas();
+          els.mainVideo.currentTime = Math.max(0, startTimeSec);
+          if (startTimeSec > 0) {
+            els.mainVideo.play().catch(() => {});
+          }
+        };
+      } else {
+        els.mainVideo.currentTime = Math.max(0, startTimeSec);
+        if (startTimeSec > 0) {
+          els.mainVideo.play().catch(() => {});
+        }
+      }
+    }
+
+    function syncOverlayCanvas() {
+      const video = els.mainVideo;
+      const canvas = els.roiOverlayCanvas;
+      const rect = video.getBoundingClientRect();
+      const parentRect = els.videoZoomContainer.getBoundingClientRect();
+
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      canvas.style.left = `${rect.left - parentRect.left}px`;
+      canvas.style.top = `${rect.top - parentRect.top}px`;
+
+      drawRoiOverlay();
+    }
+
+    function drawRoiOverlay() {
+      const canvas = els.roiOverlayCanvas;
+      const ctx = canvas.getContext("2d");
+      if (!ctx || canvas.width === 0 || canvas.height === 0) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const rx = state.roi.x * canvas.width;
+      const ry = state.roi.y * canvas.height;
+      const rw = state.roi.w * canvas.width;
+      const rh = state.roi.h * canvas.height;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(rx, ry, rw, rh);
+
+      ctx.strokeStyle = "#22d3ee";
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeRect(rx, ry, rw, rh);
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "rgba(6, 182, 212, 0.92)";
+      ctx.fillRect(rx, Math.max(0, ry - 22), 215, 22);
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 12px sans-serif";
+      ctx.fillText("🎯 내 차 접촉 감시 구역 (ROI)", rx + 6, Math.max(15, ry - 7));
+    }
+
+    function initRoiCanvasDrag() {
+      const canvas = els.roiOverlayCanvas;
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+
+      canvas.addEventListener("mousedown", (e) => {
+        if (!els.drawRoiModeCheck.checked) return;
+        const rect = canvas.getBoundingClientRect();
+        startX = e.clientX - rect.left;
+        startY = e.clientY - rect.top;
+        isDragging = true;
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        const rect = canvas.getBoundingClientRect();
+        const curX = Math.max(0, Math.min(canvas.width, e.clientX - rect.left));
+        const curY = Math.max(0, Math.min(canvas.height, e.clientY - rect.top));
+
+        const x = Math.min(startX, curX);
+        const y = Math.min(startY, curY);
+        const w = Math.abs(curX - startX);
+        const h = Math.abs(curY - startY);
+
+        if (w > 15 && h > 15 && canvas.width > 0 && canvas.height > 0) {
+          state.roi = {
+            x: +(x / canvas.width).toFixed(3),
+            y: +(y / canvas.height).toFixed(3),
+            w: +(w / canvas.width).toFixed(3),
+            h: +(h / canvas.height).toFixed(3),
+          };
+          els.presetBtns.forEach((b) => b.classList.remove("active"));
+          updateRoiBadgeText("마우스 직접 지정 구역");
+          drawRoiOverlay();
+        }
+      });
+
+      window.addEventListener("mouseup", () => {
+        isDragging = false;
+      });
+    }
+
+    function updateRoiBadgeText(customLabel) {
+      const x1 = Math.round(state.roi.x * 100);
+      const x2 = Math.round((state.roi.x + state.roi.w) * 100);
+      const y1 = Math.round(state.roi.y * 100);
+      const y2 = Math.round((state.roi.y + state.roi.h) * 100);
+      const title = customLabel || ROI_PRESETS[state.activePreset]?.name || "사용자 지정";
+      els.roiCoordsBadge.textContent = `감시 영역: ${title} (가로 ${x1}%~${x2}%, 세로 ${y1}%~${y2}%)`;
+    }
+
+    // =========================================================================
+    // 궤적 분석 및 단순 통과 차량 판별 함수
+    // =========================================================================
+    function analyzeTrajectory(points) {
+      if (!points || points.length < 3) {
+        return { straightness: 1.0, hasStopOrReverse: false, minSpeedRatio: 1.0 };
+      }
+
+      const start = points[0];
+      const end = points[points.length - 1];
+      const netDist = Math.hypot(end.cx - start.cx, end.cy - start.cy);
+
+      let totalPath = 0;
+      const speeds = [];
+      const dxs = [];
+      const dys = [];
+
+      for (let i = 1; i < points.length; i++) {
+        const dt = Math.max(0.05, points[i].t - points[i - 1].t);
+        const dx = points[i].cx - points[i - 1].cx;
+        const dy = points[i].cy - points[i - 1].cy;
+        const dist = Math.hypot(dx, dy);
+        totalPath += dist;
+        speeds.push(dist / dt);
+        dxs.push(dx);
+        dys.push(dy);
+      }
+
+      const straightness = netDist / Math.max(0.001, totalPath);
+      const maxSpd = Math.max(...speeds, 0.0001);
+      const minSpd = Math.min(...speeds);
+      const minSpeedRatio = minSpd / maxSpd;
+
+      let dirChanges = 0;
+      for (let i = 1; i < dxs.length; i++) {
+        const dot = dxs[i] * dxs[i - 1] + dys[i] * dys[i - 1];
+        if (dot < -0.0003) dirChanges++;
+      }
+
+      const hasStopOrReverse =
+        dirChanges >= 1 ||
+        (minSpeedRatio < 0.22 && points.length >= 5) ||
+        straightness < 0.58;
+
+      return { straightness, hasStopOrReverse, minSpeedRatio };
+    }
+
+    async function startBatchAnalysis() {
+      state.isAnalyzing = true;
+      state.cancelRequested = false;
+      state.events = [];
+      state.filteredPassThroughCount = 0;
+      els.filteredOutBadge.textContent = "단순 통과 차량 0대 자동 제외됨";
+      renderEventsGrid();
+
+      els.startAnalyzeBtn.classList.add("hidden");
+      els.stopAnalyzeBtn.classList.remove("hidden");
+      els.progressPanel.classList.remove("hidden");
+      els.exportReportBtn.disabled = true;
+
+      updateProgressUI("분석 준비 중...", 0, 0, state.selectedFiles.length, 0);
+
+      if (state.engineMode === "python") {
+        await runPythonBackendAnalysis();
+      } else {
+        await runBrowserStandaloneAnalysis();
+      }
+    }
+
+    async function stopBatchAnalysis() {
+      state.cancelRequested = true;
+      if (state.engineMode === "python" && state.currentJobId) {
+        try {
+          await fetch(`/api/jobs/${state.currentJobId}/cancel`, { method: "POST" });
+        } catch (_) {}
+      }
+      finishAnalysisUI("분석이 중지되었습니다.");
+    }
+
+    function finishAnalysisUI(statusMsg) {
+      state.isAnalyzing = false;
+      if (state.pollTimer) {
+        clearInterval(state.pollTimer);
+        state.pollTimer = null;
+      }
+      els.startAnalyzeBtn.classList.remove("hidden");
+      els.stopAnalyzeBtn.classList.add("hidden");
+      els.progressStatusText.textContent = statusMsg;
+      els.exportReportBtn.disabled = state.events.length === 0;
+      updateStartButtonState();
+    }
+
+    function updateProgressUI(statusText, pct, doneFiles, totalFiles, foundCount) {
+      els.progressStatusText.textContent = statusText;
+      els.progressPctText.textContent = `${Math.round(pct)}%`;
+      els.progressBarFill.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+      els.progressFileSub.textContent = `${doneFiles} / ${totalFiles} 파일 완료`;
+      els.progressFoundSub.textContent = `용의 장면: ${foundCount}건 (단순 통과 ${state.filteredPassThroughCount}건 제외)`;
+      els.filteredOutBadge.textContent = `단순 통과 차량 ${state.filteredPassThroughCount}대 자동 제외됨`;
+    }
+
+    async function runPythonBackendAnalysis() {
+      const sensitivity = parseInt(els.sensitivityRange.value, 10);
+      const sampleFps = parseFloat(els.sampleFpsSelect.value);
+      const minDwell = parseFloat(els.minDwellSelect.value);
+      const excludePass = els.excludePassThroughCheck.checked;
+      const detectShake = els.detectShakeCheck.checked;
+      const folderPath = els.localFolderPath.value.trim();
+
+      try {
+        let res;
+        if (folderPath && state.selectedFiles.length === 0) {
+          res = await fetch("/api/analyze-folder", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              folder_path: folderPath,
+              roi_x: state.roi.x,
+              roi_y: state.roi.y,
+              roi_w: state.roi.w,
+              roi_h: state.roi.h,
+              sample_fps: sampleFps,
+              sensitivity: sensitivity,
+              merge_gap_sec: 2.0,
+              exclude_pass_through: excludePass,
+              min_dwell_sec: minDwell,
+              detect_shake: detectShake,
+            }),
+          });
+        } else {
+          const formData = new FormData();
+          state.selectedFiles.forEach((f) => formData.append("files", f));
+          formData.append("roi_x", state.roi.x);
+          formData.append("roi_y", state.roi.y);
+          formData.append("roi_w", state.roi.w);
+          formData.append("roi_h", state.roi.h);
+          formData.append("sample_fps", sampleFps);
+          formData.append("sensitivity", sensitivity);
+          formData.append("merge_gap_sec", 2.0);
+          formData.append("exclude_pass_through", excludePass);
+          formData.append("min_dwell_sec", minDwell);
+          formData.append("detect_shake", detectShake);
+
+          updateProgressUI("영상을 로컬 정밀 분석 엔진으로 전달 중...", 3, 0, state.selectedFiles.length, 0);
+          res = await fetch("/api/analyze-upload", {
+            method: "POST",
+            body: formData,
+          });
+        }
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || "분석 요청 실패");
+        }
+
+        const { job_id } = await res.json();
+        state.currentJobId = job_id;
+
+        state.pollTimer = setInterval(async () => {
+          try {
+            const pollRes = await fetch(`/api/jobs/${job_id}`);
+            if (!pollRes.ok) return;
+            const job = await pollRes.json();
+
+            const prevLen = state.events.length;
+            state.events = job.events || [];
+            if (state.events.length !== prevLen) {
+              renderEventsGrid();
+              if (prevLen === 0 && state.events.length > 0) {
+                selectAndPlayEvent(state.events[0], false);
+              }
+            }
+
+            updateProgressUI(
+              job.status === "running"
+                ? `분석 중: ${job.current_file_name} (${job.current_file_progress}%)`
+                : "분석 완료!",
+              job.overall_progress,
+              job.completed_files,
+              job.total_files,
+              state.events.length
+            );
+
+            if (job.status === "completed" || job.status === "cancelled" || job.status === "error") {
+              renderEventsGrid();
+              finishAnalysisUI(
+                job.status === "completed"
+                  ? `✅ 총 ${job.total_files}개 영상 분석 완료 (${job.elapsed_sec}초) - 용의 장면 ${state.events.length}건 추출`
+                  : "분석 중지됨"
+              );
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }, 450);
+      } catch (err) {
+        alert(`오류 발생: ${err.message}`);
+        finishAnalysisUI("오류로 인해 분석이 중단되었습니다.");
+      }
+    }
+
+    // =========================================================================
+    // 브라우저 내장 정밀 궤적 · 체류 · 정적 배경 진동 분석기
+    // =========================================================================
+    async function runBrowserStandaloneAnalysis() {
+      const files = state.selectedFiles;
+      if (!files.length) {
+        finishAnalysisUI("선택된 파일이 없습니다.");
+        return;
+      }
+
+      const sensitivity = parseInt(els.sensitivityRange.value, 10);
+      const sampleFps = parseFloat(els.sampleFpsSelect.value);
+      const minDwellSec = parseFloat(els.minDwellSelect.value);
+      const excludePassThrough = els.excludePassThroughCheck.checked;
+      const detectShake = els.detectShakeCheck.checked;
+
+      const workerVideo = els.hiddenWorkerVideo;
+      const workerCanvas = els.hiddenWorkerCanvas;
+      const ctx = workerCanvas.getContext("2d", { willReadFrequently: true });
+
+      const diffThresh = Math.max(12, Math.min(46, Math.round(52 - sensitivity * 0.42)));
+      const minAreaPct = Math.max(0.18, 0.45 * ((110 - sensitivity) / 50));
+
+      for (let fIdx = 0; fIdx < files.length; fIdx++) {
+        if (state.cancelRequested) break;
+
+        const file = files[fIdx];
+        const fileUrl = state.objectUrls[fIdx];
+
+        await new Promise((resolve) => {
+          workerVideo.src = fileUrl;
+          workerVideo.onloadedmetadata = () => resolve();
+          workerVideo.onerror = () => resolve();
+        });
+
+        const duration = workerVideo.duration || 0;
+        if (!duration || !isFinite(duration)) continue;
+
+        const analysisW = 320;
+        const scale = analysisW / Math.max(1, workerVideo.videoWidth || 640);
+        const analysisH = Math.max(180, Math.round((workerVideo.videoHeight || 360) * scale));
+        workerCanvas.width = analysisW;
+        workerCanvas.height = analysisH;
+
+        const rx = Math.floor(state.roi.x * analysisW);
+        const ry = Math.floor(state.roi.y * analysisH);
+        const rw = Math.max(16, Math.floor(state.roi.w * analysisW));
+        const rh = Math.max(16, Math.floor(state.roi.h * analysisH));
+
+        const stepSec = 1.0 / sampleFps;
+        let prevGray = null;
+        let bgGray = null;
+        let currentSeg = null;
+        const fileSegments = [];
+
+        for (let t = 0; t < duration; t += stepSec) {
+          if (state.cancelRequested) break;
+
+          await seekVideoAsync(workerVideo, t);
+          ctx.drawImage(workerVideo, 0, 0, analysisW, analysisH);
+          const rgba = ctx.getImageData(0, 0, analysisW, analysisH).data;
+
+          // 그레이스케일 변환 및 평균 밝기 산출 (전조등 불빛 변화에 의한 오탐 방지)
+          const gray = new Float32Array(analysisW * analysisH);
+          let sumLum = 0;
+          for (let i = 0, p = 0; i < rgba.length; i += 4, p++) {
+            const g = rgba[i] * 0.299 + rgba[i + 1] * 0.587 + rgba[i + 2] * 0.114;
+            gray[p] = g;
+            sumLum += g;
+          }
+          const meanLum = sumLum / gray.length;
+
+          if (!prevGray || !bgGray) {
+            prevGray = new Float32Array(gray);
+            bgGray = new Float32Array(gray);
+            prevGray.meanLum = meanLum;
+            continue;
+          }
+
+          // 전체 밝기 변화 보정값 (차량 헤드라이트 비침 보정)
+          const lumShift = meanLum - (prevGray.meanLum || meanLum);
+          prevGray.meanLum = meanLum;
+
+          let activeInRoi = 0;
+          let sumWeightedX = 0;
+          let sumWeightedY = 0;
+          let sumWeight = 0;
+          let minBx = rw, minBy = rh, maxBx = 0, maxBy = 0;
+
+          // 정적 배경(상단 10%~38% 중 ROI 바깥) 미세 진동 측정
+          let staticEdgeShiftSum = 0;
+          let staticEdgeCount = 0;
+          let staticMovingOutliers = 0;
+
+          for (let y = 2; y < analysisH - 2; y += 2) {
+            for (let x = 2; x < analysisW - 2; x += 2) {
+              const p = y * analysisW + x;
+              const currVal = gray[p] - lumShift;
+              const frameDiff = Math.abs(currVal - prevGray[p]);
+              const bgDiff = Math.abs(gray[p] - bgGray[p]);
+
+              // 배경 가중 평균 업데이트
+              bgGray[p] = bgGray[p] * 0.9 + gray[p] * 0.1;
+
+              const inRoi = x >= rx && x < rx + rw && y >= ry && y < ry + rh;
+
+              if (inRoi) {
+                const comb = Math.max(frameDiff, bgDiff * 0.85);
+                if (comb > diffThresh) {
+                  activeInRoi++;
+                  const lx = x - rx;
+                  const ly = y - ry;
+                  sumWeightedX += x * comb;
+                  sumWeightedY += y * comb;
+                  sumWeight += comb;
+                  if (lx < minBx) minBx = lx;
+                  if (ly < minBy) minBy = ly;
+                  if (lx > maxBx) maxBx = lx;
+                  if (ly > maxBy) maxBy = ly;
+                }
+              } else if (detectShake && y >= analysisH * 0.09 && y <= analysisH * 0.42) {
+                // 정적 배경 엣지 부분에서만 카메라 미세 진동 측정
+                const gradX = Math.abs(gray[p + 1] - gray[p - 1]);
+                const gradY = Math.abs(gray[p + analysisW] - gray[p - analysisW]);
+                const grad = Math.max(gradX, gradY);
+                if (grad > 18) {
+                  const estShift = frameDiff / Math.max(18, grad);
+                  if (estShift > 3.5) {
+                    staticMovingOutliers++;
+                  } else {
+                    staticEdgeShiftSum += estShift;
+                    staticEdgeCount++;
+                  }
+                }
+              }
+            }
+          }
+
+          prevGray.set(gray);
+          prevGray.meanLum = meanLum;
+
+          const sampledRoiTotal = Math.max(1, (rw / 2) * (rh / 2));
+          const areaPct = (activeInRoi / sampledRoiTotal) * 100;
+
+          // 정적 배경 진동(픽셀): 배경에 지나가는 물체가 없을 때 전체 정적 엣지가 0.55~3.0px 흔들린 경우만 인정
+          let jitterPx = 0;
+          if (
+            detectShake &&
+            staticEdgeCount >= 25 &&
+            staticMovingOutliers < staticEdgeCount * 0.18
+          ) {
+            const avgShift = staticEdgeShiftSum / staticEdgeCount;
+            if (avgShift >= 0.52 && avgShift <= 3.2) {
+              jitterPx = +avgShift.toFixed(2);
+            }
+          }
+
+          const isActive = areaPct >= minAreaPct || jitterPx >= 0.55;
+
+          if (isActive) {
+            const normCx = sumWeight > 0 ? sumWeightedX / sumWeight / analysisW : state.roi.x + state.roi.w * 0.5;
+            const normCy = sumWeight > 0 ? sumWeightedY / sumWeight / analysisH : state.roi.y + state.roi.h * 0.5;
+            const bbox =
+              maxBx > minBx && maxBy > minBy
+                ? {
+                    x: (rx + minBx) / analysisW,
+                    y: (ry + minBy) / analysisH,
+                    w: Math.max(14, maxBx - minBx) / analysisW,
+                    h: Math.max(14, maxBy - minBy) / analysisH,
+                  }
+                : { ...state.roi };
+
+            const importance = jitterPx * 35 + Math.min(35, areaPct * 1.4);
+
+            if (!currentSeg) {
+              const snap = captureCleanCanvas(workerVideo);
+              currentSeg = {
+                start_time: t,
+                end_time: t,
+                peak_time: t,
+                max_importance: importance,
+                max_area_pct: areaPct,
+                max_jitter_px: jitterPx,
+                first_canvas: snap,
+                peak_canvas: snap,
+                last_canvas: snap,
+                peak_bbox: bbox,
+                trajectory: [{ t, cx: normCx, cy: normCy, areaPct }],
+              };
+            } else {
+              currentSeg.end_time = t;
+              currentSeg.last_canvas = captureCleanCanvas(workerVideo);
+              currentSeg.max_area_pct = Math.max(currentSeg.max_area_pct, areaPct);
+              currentSeg.max_jitter_px = Math.max(currentSeg.max_jitter_px, jitterPx);
+              currentSeg.trajectory.push({ t, cx: normCx, cy: normCy, areaPct });
+
+              if (importance >= currentSeg.max_importance) {
+                currentSeg.max_importance = importance;
+                currentSeg.peak_time = t;
+                currentSeg.peak_canvas = captureCleanCanvas(workerVideo);
+                currentSeg.peak_bbox = bbox;
+              }
+            }
+          } else if (currentSeg && t - currentSeg.end_time > 2.0) {
+            fileSegments.push(currentSeg);
+            currentSeg = null;
+          }
+
+          const filePct = Math.min(99, (t / duration) * 100);
+          const overallPct = ((fIdx + filePct / 100) / files.length) * 100;
+          updateProgressUI(
+            `궤적·접촉 분석 중: ${file.name} (${Math.round(filePct)}%)`,
+            overallPct,
+            fIdx,
+            files.length,
+            state.events.length
+          );
+        }
+
+        if (currentSeg) fileSegments.push(currentSeg);
+
+        // 세그먼트별 정밀 행동 판별
+        fileSegments.forEach((seg, sIdx) => {
+          const dwellSec = +Math.max(0.2, seg.end_time - seg.start_time).toFixed(2);
+          const jitterPx = +seg.max_jitter_px.toFixed(2);
+          const maxArea = +seg.max_area_pct.toFixed(2);
+          const { straightness, hasStopOrReverse, minSpeedRatio } = analyzeTrajectory(seg.trajectory);
+
+          let category = "";
+          let label = "";
+          let score = 0;
+          let reason = "";
+
+          // 1) 실제 차체 흔들림(접촉 충격)
+          if (jitterPx >= 0.55) {
+            category = "impact";
+            label = "🚨 접촉/충격 감지 (차체 미세 흔들림)";
+            score = Math.min(98, +(74 + jitterPx * 18 + (hasStopOrReverse ? 8 : 0)).toFixed(1));
+            reason = `정적 배경 기준 차체 흔들림(${jitterPx}px) 감지 · 체류 ${dwellSec}초`;
+          }
+          // 2) 단순 통과 차량 (짧은 시간 직선 통과 또는 정지/방향전환 없이 직선 통과)
+          else if (
+            (dwellSec < minDwellSec && !hasStopOrReverse && straightness >= 0.62) ||
+            (dwellSec < 3.8 && straightness >= 0.76 && !hasStopOrReverse)
+          ) {
+            category = "pass_through";
+            label = "🚗 단순 통과 차량 (정상 주행)";
+            score = +Math.min(22, 8 + dwellSec * 4).toFixed(1);
+            reason = `정지·방향전환 없이 ${dwellSec}초 만에 직선 주행 통과`;
+            if (excludePassThrough) {
+              state.filteredPassThroughCount++;
+              return;
+            }
+          }
+          // 3) 차량 근접 감속·주차기동 (차로 긁고 가는 상황)
+          else if (maxArea >= 6.0 && (hasStopOrReverse || dwellSec >= 3.0)) {
+            category = "scrape_maneuver";
+            label = "⚠️ 차량 근접 감속·주차기동 (접촉 의심)";
+            const dwellBonus = Math.min(28, dwellSec * 2.8);
+            const stopBonus = hasStopOrReverse ? 18 : 5;
+            score = +Math.min(92, 46 + dwellBonus + stopBonus).toFixed(1);
+            reason = `내 차 옆 ${dwellSec}초간 체류 · 근접 감속/전후진 기동 포착`;
+          }
+          // 4) 보행자/문콕 근접 체류
+          else {
+            category = "person_linger";
+            label = "🕵️ 보행자·문콕 근접 체류 (스크래치 의심)";
+            const dwellBonus = Math.min(32, dwellSec * 3.2);
+            const stopBonus = hasStopOrReverse ? 15 : 0;
+            score = +Math.min(89, 42 + dwellBonus + stopBonus).toFixed(1);
+            reason = `내 차 옆 ${dwellSec}초간 머무르며 근접 움직임 반복`;
+          }
+
+          const thumbUrl = renderPeakWithTrajectory(seg.peak_canvas, seg.peak_bbox, seg.trajectory, category);
+          const stripUrl = renderThreeStageStrip(seg.first_canvas, seg.peak_canvas, seg.last_canvas);
+
+          const startT = Math.max(0, +(seg.start_time - 1.5).toFixed(2));
+          const endT = +Math.min(duration, seg.end_time + 1.5).toFixed(2);
+
+          state.events.push({
+            event_id: `b_ev_${fIdx}_${sIdx + 1}`,
+            file_name: file.name,
+            file_index: fIdx,
+            start_time: startT,
+            end_time: endT,
+            peak_time: +seg.peak_time.toFixed(2),
+            duration: +Math.max(0.5, endT - startT).toFixed(2),
+            score,
+            category,
+            label,
+            reason,
+            dwell_sec: dwellSec,
+            jitter_px: jitterPx,
+            deceleration_ratio: +((1 - minSpeedRatio) * 100).toFixed(1),
+            bbox: seg.peak_bbox,
+            thumbnail_data_url: thumbUrl,
+            strip_data_url: stripUrl,
+            video_url: fileUrl,
+          });
+        });
+
+        renderEventsGrid();
+      }
+
+      finishAnalysisUI(
+        state.cancelRequested
+          ? "분석 중지됨"
+          : `✅ 분석 완료: 용의 장면 ${state.events.length}건 추출 (단순 통과 차량 ${state.filteredPassThroughCount}대 자동 제외됨)`
+      );
+    }
+
+    function seekVideoAsync(videoEl, timeSec) {
+      return new Promise((resolve) => {
+        const onSeeked = () => {
+          videoEl.removeEventListener("seeked", onSeeked);
+          resolve();
+        };
+        videoEl.addEventListener("seeked", onSeeked);
+        videoEl.currentTime = timeSec;
+      });
+    }
+
+    function captureCleanCanvas(videoEl) {
+      const c = document.createElement("canvas");
+      c.width = 480;
+      c.height = 270;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(videoEl, 0, 0, c.width, c.height);
+      return c;
+    }
+
+    function renderPeakWithTrajectory(baseCanvas, bbox, trajectory, category) {
+      const c = document.createElement("canvas");
+      c.width = 480;
+      c.height = 270;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(baseCanvas, 0, 0);
+
+      // ROI 표시
+      ctx.strokeStyle = "rgba(34, 211, 238, 0.85)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(
+        state.roi.x * c.width,
+        state.roi.y * c.height,
+        state.roi.w * c.width,
+        state.roi.h * c.height
+      );
+
+      // 이동 궤적 그리기
+      if (trajectory && trajectory.length >= 2) {
+        ctx.beginPath();
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 3;
+        trajectory.forEach((pt, idx) => {
+          const px = pt.cx * c.width;
+          const py = pt.cy * c.height;
+          if (idx === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+
+        const first = trajectory[0];
+        const last = trajectory[trajectory.length - 1];
+        ctx.fillStyle = "#facc15";
+        ctx.beginPath();
+        ctx.arc(first.cx * c.width, first.cy * c.height, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#ef4444";
+        ctx.beginPath();
+        ctx.arc(last.cx * c.width, last.cy * c.height, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 바운딩 박스
+      ctx.strokeStyle = category === "impact" ? "#ef4444" : "#f59e0b";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(
+        bbox.x * c.width,
+        bbox.y * c.height,
+        Math.max(18, bbox.w * c.width),
+        Math.max(18, bbox.h * c.height)
+      );
+
+      return c.toDataURL("image/jpeg", 0.82);
+    }
+
+    function renderThreeStageStrip(firstCanvas, peakCanvas, lastCanvas) {
+      const cellW = 200;
+      const cellH = 112;
+      const c = document.createElement("canvas");
+      c.width = cellW * 3;
+      c.height = cellH;
+      const ctx = c.getContext("2d");
+
+      const frames = [firstCanvas, peakCanvas, lastCanvas];
+      const labels = ["1. 접근 시점", "2. 최대 밀착/피크", "3. 직후"];
+
+      frames.forEach((f, idx) => {
+        const x0 = idx * cellW;
+        ctx.drawImage(f, x0, 0, cellW, cellH);
+        ctx.fillStyle = "rgba(15, 23, 42, 0.82)";
+        ctx.fillRect(x0, cellH - 20, cellW, 20);
+        ctx.fillStyle = "#f8fafc";
+        ctx.font = "bold 11px sans-serif";
+        ctx.fillText(labels[idx], x0 + 6, cellH - 6);
+      });
+
+      return c.toDataURL("image/jpeg", 0.8);
+    }
+
+    function renderEventsGrid() {
+      els.totalEventsBadge.textContent = `${state.events.length}건`;
+
+      let list = [...state.events];
+      if (state.activeFilter !== "all") {
+        list = list.filter((ev) => ev.category === state.activeFilter);
+      }
+
+      if (state.sortOrder === "score_desc") {
+        list.sort((a, b) => b.score - a.score);
+      } else if (state.sortOrder === "dwell_desc") {
+        list.sort((a, b) => (b.dwell_sec || 0) - (a.dwell_sec || 0));
+      } else {
+        list.sort((a, b) => a.file_index - b.file_index || a.peak_time - b.peak_time);
+      }
+
+      if (list.length === 0) {
+        els.eventsGrid.innerHTML = `
+          <div class="empty-results">
+            <p>${
+              state.events.length === 0
+                ? "추출된 용의 장면이 없습니다. (단순 주행 통과 차량은 자동으로 배제되었습니다.)"
+                : "현재 선택한 분류 필터에 해당하는 장면이 없습니다."
+            }</p>
+          </div>
+        `;
+        return;
+      }
+
+      els.eventsGrid.innerHTML = "";
+      list.forEach((ev) => {
+        const card = document.createElement("div");
+        card.className = `event-card ${ev.category === "impact" ? "impact-card" : ""} ${
+          state.selectedEventId === ev.event_id ? "selected" : ""
+        }`;
+
+        const stripHtml = ev.strip_data_url
+          ? `<div class="strip-wrap"><img src="${ev.strip_data_url}" alt="전중후 3단 비교" loading="lazy" /></div>`
+          : "";
+
+        card.innerHTML = `
+          <div class="thumb-wrap">
+            <img src="${ev.thumbnail_data_url}" alt="${escapeHtml(ev.label)}" loading="lazy" />
+            <span class="event-badge ${ev.category}">${escapeHtml(ev.label)}</span>
+            <span class="score-pill">의심도 ${ev.score}%</span>
+            <span class="time-overlay">${formatTime(ev.start_time)} ~ ${formatTime(ev.end_time)}</span>
+          </div>
+          ${stripHtml}
+          <div class="event-body">
+            <div class="event-file" title="${escapeHtml(ev.file_name)}">🎬 ${escapeHtml(ev.file_name)}</div>
+            <div class="event-reason">💡 ${escapeHtml(ev.reason || "근접 체류 및 감속 감지")}</div>
+            <div class="event-meta">
+              <span>피크: <strong>${formatTime(ev.peak_time)}</strong></span>
+              <span>체류시간: <strong>${ev.dwell_sec || ev.duration}초</strong></span>
+              <span>차체진동: <strong>${ev.jitter_px || 0}px</strong></span>
+            </div>
+          </div>
+        `;
+
+        card.addEventListener("click", () => selectAndPlayEvent(ev, true));
+        els.eventsGrid.appendChild(card);
+      });
+    }
+
+    function selectAndPlayEvent(ev, autoPlay = true) {
+      state.selectedEventId = ev.event_id;
+      renderEventsGrid();
+
+      const localBlobUrl = state.objectUrls[ev.file_index];
+      const playUrl = localBlobUrl || ev.video_url;
+      const jumpTime = Math.max(0, ev.peak_time - 2.0);
+
+      loadVideoToMainPlayer(
+        playUrl,
+        `${ev.file_name} — ${ev.label} | 피크 시점 ${formatTime(ev.peak_time)} (2초 전부터 재생)`,
+        jumpTime
+      );
+
+      if (!autoPlay) {
+        els.mainVideo.pause();
+      }
+    }
+
+    function seekRelative(deltaSec) {
+      if (!els.mainVideo.src) return;
+      els.mainVideo.currentTime = Math.max(
+        0,
+        Math.min(els.mainVideo.duration || 99999, els.mainVideo.currentTime + deltaSec)
+      );
+    }
+
+    function applyVideoZoom() {
+      els.videoZoomContainer.style.transform = `scale(${state.zoomLevel}) translate(${state.panX}px, ${state.panY}px)`;
+    }
+
+    function captureCurrentVideoFrame() {
+      const v = els.mainVideo;
+      if (!v.src || v.videoWidth === 0) {
+        alert("먼저 캡처할 영상을 재생하거나 선택해 주세요.");
+        return;
+      }
+
+      const c = document.createElement("canvas");
+      c.width = v.videoWidth;
+      c.height = v.videoHeight;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(v, 0, 0, c.width, c.height);
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+      ctx.fillRect(0, c.height - 44, c.width, 44);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 20px sans-serif";
+      const timeStr = formatTime(v.currentTime);
+      ctx.fillText(
+        `[증거 캡처] ${els.currentVideoTitle.textContent} | 시점: ${timeStr}`,
+        16,
+        c.height - 15
+      );
+
+      const link = document.createElement("a");
+      link.download = `블랙박스_증거캡처_${timeStr.replace(":", "분")}초.png`;
+      link.href = c.toDataURL("image/png");
+      link.click();
+    }
+
+    function exportHtmlReport() {
+      if (!state.events.length) return;
+
+      const rows = state.events
+        .map(
+          (ev, i) => `
+          <div style="border:1px solid #cbd5e1;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+            <div>
+              <img src="${ev.thumbnail_data_url}" style="width:280px;border-radius:8px;border:1px solid #94a3b8;display:block;margin-bottom:6px;" />
+              ${ev.strip_data_url ? `<img src="${ev.strip_data_url}" style="width:280px;border-radius:6px;border:1px solid #cbd5e1;display:block;" />` : ""}
+            </div>
+            <div>
+              <h3 style="margin:0 0 6px 0;">#${i + 1} ${escapeHtml(ev.label)} - 의심도 ${ev.score}%</h3>
+              <p style="margin:4px 0;"><strong>파일명:</strong> ${escapeHtml(ev.file_name)}</p>
+              <p style="margin:4px 0;"><strong>판정 근거:</strong> ${escapeHtml(ev.reason || "")}</p>
+              <p style="margin:4px 0;"><strong>감지 구간:</strong> ${formatTime(ev.start_time)} ~ ${formatTime(ev.end_time)} (최대 밀착 시점: <strong>${formatTime(ev.peak_time)}</strong>)</p>
+              <p style="margin:4px 0;"><strong>근접 체류 시간:</strong> ${ev.dwell_sec}초 / <strong>차체 미세 진동:</strong> ${ev.jitter_px}px</p>
+            </div>
+          </div>`
+        )
+        .join("");
+
+      const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>블랙박스 범인 잡기 v2 - 정밀 감지 리포트</title>
+</head>
+<body style="font-family:sans-serif;max-width:980px;margin:24px auto;padding:0 16px;color:#0f172a;">
+  <h1>🚨 블랙박스 용의 장면 정밀 분석 리포트</h1>
+  <p>생성 일시: ${new Date().toLocaleString("ko-KR")} | 추출된 용의 장면: <strong>${state.events.length}건</strong> (단순 통과 차량 ${state.filteredPassThroughCount}대 제외)</p>
+  <hr style="margin:16px 0;" />
+  ${rows}
+</body>
+</html>`;
+
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const link = document.createElement("a");
+      link.download = `블랙박스_범인감지_리포트_${new Date().toISOString().slice(0, 10)}.html`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    }
+
+    function formatTime(sec) {
+      if (!isFinite(sec) || sec < 0) return "00:00.0";
+      const m = Math.floor(sec / 60);
+      const s = (sec % 60).toFixed(1);
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(4, "0")}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    document.addEventListener("DOMContentLoaded", initApp);
+  </script>
+</body>
+</html>
